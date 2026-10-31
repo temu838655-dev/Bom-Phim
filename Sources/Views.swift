@@ -378,6 +378,7 @@ struct VideoPlayerView: View {
     @State private var subtitleImportError: String?
     @State private var timeObserver: Any?
     @AppStorage("bomphim.audio.mode") private var audioMode = "Tự động"
+    @State private var isDolbyAtmosRendered = false
 
     private var subtitleColor: Color {
         switch subtitleColorName {
@@ -472,6 +473,11 @@ struct VideoPlayerView: View {
                     .accessibilityLabel(T("Tùy chọn âm thanh"))
                     Spacer()
                 }
+                if isDolbyAtmosRendered {
+                    Label("Dolby Atmos thật", systemImage: "waveform").font(.caption.bold())
+                        .foregroundStyle(.white).padding(.horizontal, 10).padding(.vertical, 6)
+                        .background(.black.opacity(0.72), in: Capsule())
+                }
                 if let subtitleImportError {
                     Text(subtitleImportError)
                         .font(.caption).foregroundStyle(.white)
@@ -495,6 +501,10 @@ struct VideoPlayerView: View {
             requestOrientation(.landscape)
             isLandscapeRequested = true
             player.play()
+            refreshDolbyAtmosStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.renderingModeChangeNotification)) { _ in
+            refreshDolbyAtmosStatus()
         }
         .onChange(of: audioMode) { newMode in
             guard let item = player.currentItem else { return }
@@ -502,6 +512,7 @@ struct VideoPlayerView: View {
         }
         .onDisappear {
             player.pause()
+            isDolbyAtmosRendered = false
             if let timeObserver {
                 player.removeTimeObserver(timeObserver)
                 self.timeObserver = nil
@@ -514,6 +525,16 @@ struct VideoPlayerView: View {
                 requestOrientation(.portrait)
                 isLandscapeRequested = false
             }
+        }
+    }
+
+    private func refreshDolbyAtmosStatus() {
+        // Only badge Atmos when iOS reports the active AVPlayer rendering mode.
+        // A stereo upmix or spatialized stereo source is never labelled Atmos.
+        if #available(iOS 18.0, *) {
+            isDolbyAtmosRendered = player.rate > 0 && AVAudioSession.sharedInstance().renderingMode == .dolbyAtmos
+        } else {
+            isDolbyAtmosRendered = false
         }
     }
 
