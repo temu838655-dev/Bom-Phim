@@ -377,6 +377,7 @@ struct VideoPlayerView: View {
     @State private var showingSubtitleImporter = false
     @State private var subtitleImportError: String?
     @State private var timeObserver: Any?
+    @AppStorage("bomphim.audio.mode") private var audioMode = "Tự động"
 
     private var subtitleColor: Color {
         switch subtitleColorName {
@@ -448,6 +449,27 @@ struct VideoPlayerView: View {
                             .padding(12).background(.ultraThinMaterial, in: Capsule())
                     }
                     .accessibilityLabel(T("Phụ đề"))
+                    Menu {
+                        Button {
+                            audioMode = "Tự động"
+                        } label: {
+                            Label(T("Tự động (khuyến nghị)"), systemImage: audioMode == "Tự động" ? "checkmark" : "waveform")
+                        }
+                        Button {
+                            audioMode = "Spatial Audio"
+                        } label: {
+                            Label(T("Spatial Audio"), systemImage: audioMode == "Spatial Audio" ? "checkmark" : "headphones")
+                        }
+                        Button {
+                            audioMode = "Tiêu chuẩn"
+                        } label: {
+                            Label(T("Âm thanh tiêu chuẩn"), systemImage: audioMode == "Tiêu chuẩn" ? "checkmark" : "speaker.wave.2")
+                        }
+                    } label: {
+                        Image(systemName: "waveform").font(.headline).foregroundStyle(.white)
+                            .padding(12).background(.ultraThinMaterial, in: Circle())
+                    }
+                    .accessibilityLabel(T("Tùy chọn âm thanh"))
                     Spacer()
                 }
                 if let subtitleImportError {
@@ -464,6 +486,7 @@ struct VideoPlayerView: View {
             importSubtitle(result)
         }
         .onAppear {
+            configureAudioSession()
             let item = AVPlayerItem(url: url)
             player = AVPlayer(playerItem: item)
             loadSubtitleOptions(from: item)
@@ -481,10 +504,23 @@ struct VideoPlayerView: View {
             currentSubtitle = ""
             subtitleCues = []
             player.replaceCurrentItem(with: nil)
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
             if isLandscapeRequested {
                 requestOrientation(.portrait)
                 isLandscapeRequested = false
             }
+        }
+    }
+
+    private func configureAudioSession() {
+        // AVPlayer uses the system audio pipeline. iOS can select Atmos / spatial
+        // output when the media stream and connected audio device support it.
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .moviePlayback, options: [.allowAirPlay, .allowBluetoothA2DP])
+            try session.setActive(true)
+        } catch {
+            // Playback can still proceed using the system's current audio session.
         }
     }
 
