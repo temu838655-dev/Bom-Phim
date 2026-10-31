@@ -86,6 +86,28 @@ struct AppSettingsView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                if profileEnabled {
+                    Section("Sở thích phim của hồ sơ") {
+                        Text("Chọn thể loại bạn thường xem. Sở thích được lưu riêng cho từng hồ sơ.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        ForEach(["Hành động", "Hài", "Tình cảm", "Kinh dị", "Viễn tưởng", "Hoạt hình", "Tâm lý", "Phiêu lưu", "Tài liệu", "Gia đình"], id: \.self) { genre in
+                            Button {
+                                profileStore.togglePreferredGenre(genre)
+                            } label: {
+                                HStack {
+                                    Text(genre)
+                                    Spacer()
+                                    if profileStore.preferredGenres.contains(genre) {
+                                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.tint)
+                                    } else {
+                                        Image(systemName: "circle").foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
                 Section("Giao diện") {
                     Picker("Chủ đề", selection: $theme) {
                         ForEach(themes, id: \.self) { Text($0).tag($0) }
