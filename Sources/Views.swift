@@ -364,22 +364,55 @@ struct PlayerItem: Identifiable {
 
 struct VideoPlayerView: View {
     let url: URL
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\\.dismiss) private var dismiss
     @State private var player = AVPlayer()
     @State private var isLandscapeRequested = false
+    @State private var subtitleOptions: [AVMediaSelectionOption] = []
+    @State private var subtitleGroup: AVMediaSelectionGroup?
+    @State private var selectedSubtitleName: String?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color.black.ignoresSafeArea()
             VideoPlayer(player: player).ignoresSafeArea()
-            Button { dismiss() } label: {
-                Image(systemName: "xmark").font(.headline).foregroundStyle(.white)
-                    .padding(12).background(.ultraThinMaterial, in: Circle())
-            }.padding(.top, 18).padding(.leading, 16)
+            HStack(spacing: 12) {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark").font(.headline).foregroundStyle(.white)
+                        .padding(12).background(.ultraThinMaterial, in: Circle())
+                }
+                Menu {
+                    Button(T("Tắt phụ đề")) {
+                        if let group = subtitleGroup {
+                            player.currentItem?.select(nil, in: group)
+                            selectedSubtitleName = nil
+                        }
+                    }
+                    ForEach(Array(subtitleOptions.enumerated()), id: \.offset) { _, option in
+                        Button(option.displayName) {
+                            if let group = subtitleGroup {
+                                player.currentItem?.select(option, in: group)
+                                selectedSubtitleName = option.displayName
+                            }
+                        }
+                    }
+                } label: {
+                    Label("CC", systemImage: "captions.bubble")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                .disabled(subtitleOptions.isEmpty)
+                .accessibilityLabel(T("Phụ đề"))
+            }
+            .padding(.top, 18)
+            .padding(.leading, 16)
         }
         .statusBarHidden()
         .onAppear {
-            player = AVPlayer(url: url)
+            let item = AVPlayerItem(url: url)
+            player = AVPlayer(playerItem: item)
+            loadSubtitleOptions(from: item)
             requestOrientation(.landscape)
             isLandscapeRequested = true
             player.play()
@@ -387,6 +420,20 @@ struct VideoPlayerView: View {
         .onDisappear {
             player.pause()
             if isLandscapeRequested { requestOrientation(.portrait) }
+        }
+    }
+
+    private func loadSubtitleOptions(from item: AVPlayerItem) {
+        let asset = item.asset
+        if let group = asset.mediaSelectionGroup(forMediaCharacteristic: .legible) {
+            subtitleGroup = group
+            subtitleOptions = group.options
+            if let current = item.currentMediaSelection.selectedMediaOption(in: group) {
+                selectedSubtitleName = current.displayName
+            }
+        } else {
+            subtitleGroup = nil
+            subtitleOptions = []
         }
     }
 
