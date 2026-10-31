@@ -74,7 +74,7 @@ struct AppSettingsView: View {
                 if let message { Section { Text(message).font(.footnote) } }
             }
             .scrollContentBackground(.hidden)
-            .background(BomTheme.background)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Cài đặt")
         }
     }
