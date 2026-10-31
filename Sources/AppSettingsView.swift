@@ -9,7 +9,7 @@ struct AppSettingsView: View {
     @State private var pin = ""
     @State private var pinConfirmation = ""
     @State private var hasPIN = PINStore.hasPIN
-    @State private var message: String?
+    @State private var message: String?\n    @StateObject private var profileStore = ProfileStore.shared\n    @State private var newProfileName = ""
 
     private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
     private let themes = ["Đỏ điện ảnh", "Xanh đại dương", "Tím neon", "Xanh ngọc", "Sáng tối giản"]
@@ -47,7 +47,7 @@ struct AppSettingsView: View {
                                 message = "Đã xóa mã PIN trên thiết bị."
                             }
                         }
-                        Text("Mã PIN được lưu trong Keychain của iPhone. Hồ sơ hiện là cấu hình cá nhân trên thiết bị này.")
+                        Text("Mã PIN được lưu trong Keychain của iPhone và dùng để mở khóa hồ sơ.")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
                         Text("Tắt hồ sơ để vào thẳng trang chủ, không cần chọn hồ sơ.")
@@ -105,7 +105,7 @@ struct AppSettingsView: View {
     }
 }
 
-private enum PINStore {
+enum PINStore {
     private static let service = "com.bomphim.profile"
     private static let account = "profile-pin"
     static var hasPIN: Bool {
@@ -114,7 +114,7 @@ private enum PINStore {
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
-    static func save(_ pin: String) -> Bool {
+    static func verify(_ pin: String) -> Bool {\n        var query = baseQuery\n        query[kSecReturnData as String] = true\n        query[kSecMatchLimit as String] = kSecMatchLimitOne\n        var result: CFTypeRef?\n        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,\n              let data = result as? Data, let saved = String(data: data, encoding: .utf8) else { return false }\n        return saved == pin\n    }\n    static func save(_ pin: String) -> Bool {
         delete()
         var query = baseQuery
         query[kSecValueData as String] = Data(pin.utf8)
