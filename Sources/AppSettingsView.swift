@@ -99,7 +99,7 @@ struct AppSettingsView: View {
                                 profileStore.togglePreferredGenre(genre)
                             } label: {
                                 HStack {
-                                    Text(genre)
+                                    Text(T(genre))
                                     Spacer()
                                     if profileStore.preferredGenres.contains(genre) {
                                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.tint)
