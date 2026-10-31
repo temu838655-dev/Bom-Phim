@@ -12,7 +12,9 @@ struct AppSettingsView: View {
     @StateObject private var profileStore = ProfileStore.shared
     @State private var newProfileName = ""
 
-    private var hasPIN: Bool { PINStore.hasPIN(for: profileStore.activeProfileID) }\n\n    private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
+    private var hasPIN: Bool { PINStore.hasPIN(for: profileStore.activeProfileID) }
+
+    private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
     private let themes = ["Đỏ điện ảnh", "Xanh đại dương", "Tím neon", "Xanh ngọc", "Sáng tối giản"]
 
     var body: some View {
@@ -163,7 +165,10 @@ enum PINStore {
     private static let service = "com.bomphim.profile"
 
     static func hasPIN(for profileID: String) -> Bool {
-        var query = baseQuery(for: profileID)\n        query[kSecReturnData as String] = false\n        query[kSecMatchLimit as String] = kSecMatchLimitOne\n        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
+        var query = baseQuery(for: profileID)
+        query[kSecReturnData as String] = false
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 
     static func verify(_ pin: String, for profileID: String) -> Bool {
