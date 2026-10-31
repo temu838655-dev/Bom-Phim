@@ -39,7 +39,7 @@ final class ProfileStore: ObservableObject {
         }
     }
 
-    var activeProfile: BomProfile? { profiles.first { $0.id == activeProfileID } }
+    var activeProfile: BomProfile? { profiles.first { $0.id == activeProfileID } }\n\n    func togglePreferredGenre(_ genre: String) {\n        if preferredGenres.contains(genre) { preferredGenres.remove(genre) }\n        else { preferredGenres.insert(genre) }\n        UserDefaults.standard.set(Array(preferredGenres).sorted(), forKey: preferencesKey)\n    }\n\n    private var preferencesKey: String { "bomphim.profile.preferences.\\(activeProfileID)" }\n\n    private func loadPreferences() {\n        preferredGenres = Set(UserDefaults.standard.stringArray(forKey: preferencesKey) ?? [])\n    }
 
     func addProfile(name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
