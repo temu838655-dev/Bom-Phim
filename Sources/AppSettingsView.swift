@@ -9,7 +9,9 @@ struct AppSettingsView: View {
     @State private var pin = ""
     @State private var pinConfirmation = ""
     @State private var hasPIN = PINStore.hasPIN
-    @State private var message: String?\n    @StateObject private var profileStore = ProfileStore.shared\n    @State private var newProfileName = ""
+    @State private var message: String?
+    @StateObject private var profileStore = ProfileStore.shared
+    @State private var newProfileName = ""
 
     private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
     private let themes = ["Đỏ điện ảnh", "Xanh đại dương", "Tím neon", "Xanh ngọc", "Sáng tối giản"]
@@ -48,6 +50,37 @@ struct AppSettingsView: View {
                             }
                         }
                         Text("Mã PIN được lưu trong Keychain của iPhone và dùng để mở khóa hồ sơ.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            TextField("Tên hồ sơ mới", text: $newProfileName)
+                            Button("Thêm") {
+                                profileStore.addProfile(name: newProfileName)
+                                newProfileName = ""
+                            }
+                            .disabled(newProfileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || profileStore.profiles.count >= 8)
+                        }
+                        ForEach(profileStore.profiles) { profile in
+                            HStack {
+                                Button {
+                                    profileStore.activeProfileID = profile.id
+                                } label: {
+                                    HStack {
+                                        Text(profile.name)
+                                        Spacer()
+                                        if profile.id == profileStore.activeProfileID {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                if profileStore.profiles.count > 1 {
+                                    Button(role: .destructive) {
+                                        profileStore.deleteProfile(id: profile.id)
+                                    } label: { Image(systemName: "trash") }
+                                }
+                            }
+                        }
+                        Text("Tối đa 8 hồ sơ. Mỗi hồ sơ có lịch sử xem và danh sách yêu thích riêng.")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
                         Text("Tắt hồ sơ để vào thẳng trang chủ, không cần chọn hồ sơ.")
@@ -114,7 +147,16 @@ enum PINStore {
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
-    static func verify(_ pin: String) -> Bool {\n        var query = baseQuery\n        query[kSecReturnData as String] = true\n        query[kSecMatchLimit as String] = kSecMatchLimitOne\n        var result: CFTypeRef?\n        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,\n              let data = result as? Data, let saved = String(data: data, encoding: .utf8) else { return false }\n        return saved == pin\n    }\n    static func save(_ pin: String) -> Bool {
+    static func verify(_ pin: String) -> Bool {
+        var query = baseQuery
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data, let saved = String(data: data, encoding: .utf8) else { return false }
+        return saved == pin
+    }
+    static func save(_ pin: String) -> Bool {
         delete()
         var query = baseQuery
         query[kSecValueData as String] = Data(pin.utf8)
