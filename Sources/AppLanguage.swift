@@ -62,7 +62,28 @@ enum AppLanguage {
             "Chủ đề": ["en":"Theme","zh-Hans":"主题","ja":"テーマ","ko":"테마","th":"ธีม","fr":"Thème","es":"Tema"],
             "Sở thích phim của hồ sơ": ["en":"Profile movie preferences","zh-Hans":"资料观影偏好","ja":"プロフィールの映画の好み","ko":"프로필 영화 취향","th":"ความชอบภาพยนตร์ของโปรไฟล์","fr":"Préférences cinéma du profil","es":"Preferencias de películas del perfil"]
         ]
-        return translations[vietnamese]?[language] ?? vietnamese
+        let extra: [String: [String: String]] = [
+            "Đỏ điện ảnh": ["en":"Cinema Red","zh-Hans":"电影红","ja":"シネマレッド","ko":"시네마 레드","th":"แดงภาพยนตร์","fr":"Rouge cinéma","es":"Rojo cine"],
+            "Xanh đại dương": ["en":"Ocean Blue","zh-Hans":"海洋蓝","ja":"オーシャンブルー","ko":"오션 블루","th":"น้ำเงินมหาสมุทร","fr":"Bleu océan","es":"Azul océano"],
+            "Tím neon": ["en":"Neon Purple","zh-Hans":"霓虹紫","ja":"ネオンパープル","ko":"네온 퍼플","th":"ม่วงนีออน","fr":"Violet néon","es":"Púrpura neón"],
+            "Xanh ngọc": ["en":"Jade Green","zh-Hans":"翡翠绿","ja":"ジェードグリーン","ko":"제이드 그린","th":"เขียวหยก","fr":"Vert jade","es":"Verde jade"],
+            "Sáng tối giản": ["en":"Minimal Light","zh-Hans":"简约浅色","ja":"ミニマルライト","ko":"미니멀 라이트","th":"สว่างมินิมอล","fr":"Clair minimaliste","es":"Claro minimalista"],
+            "Hành động": ["en":"Action","zh-Hans":"动作","ja":"アクション","ko":"액션","th":"แอ็กชัน","fr":"Action","es":"Acción"],
+            "Hài": ["en":"Comedy","zh-Hans":"喜剧","ja":"コメディ","ko":"코미디","th":"ตลก","fr":"Comédie","es":"Comedia"],
+            "Tình cảm": ["en":"Romance","zh-Hans":"爱情","ja":"恋愛","ko":"로맨스","th":"โรแมนติก","fr":"Romance","es":"Romance"],
+            "Kinh dị": ["en":"Horror","zh-Hans":"恐怖","ja":"ホラー","ko":"공포","th":"สยองขวัญ","fr":"Horreur","es":"Terror"],
+            "Viễn tưởng": ["en":"Sci-Fi","zh-Hans":"科幻","ja":"SF","ko":"SF","th":"ไซไฟ","fr":"Science-fiction","es":"Ciencia ficción"],
+            "Hoạt hình": ["en":"Animation","zh-Hans":"动画","ja":"アニメーション","ko":"애니메이션","th":"แอนิเมชัน","fr":"Animation","es":"Animación"],
+            "Tâm lý": ["en":"Drama","zh-Hans":"剧情","ja":"ドラマ","ko":"드라마","th":"ดราม่า","fr":"Drame","es":"Drama"],
+            "Phiêu lưu": ["en":"Adventure","zh-Hans":"冒险","ja":"アドベンチャー","ko":"모험","th":"ผจญภัย","fr":"Aventure","es":"Aventura"],
+            "Tài liệu": ["en":"Documentary","zh-Hans":"纪录片","ja":"ドキュメンタリー","ko":"다큐멘터리","th":"สารคดี","fr":"Documentaire","es":"Documental"],
+            "Gia đình": ["en":"Family","zh-Hans":"家庭","ja":"ファミリー","ko":"가족","th":"ครอบครัว","fr":"Famille","es":"Familia"],
+            "Tối đa 8 hồ sơ. Mỗi hồ sơ có lịch sử xem và danh sách yêu thích riêng.": ["en":"Up to 8 profiles. Each has its own watch history and favorites.","zh-Hans":"最多可创建 8 个资料，每个资料都有独立的观看记录和收藏。","ja":"最大8件のプロフィールを作成でき、それぞれ視聴履歴とお気に入りを管理します。","ko":"최대 8개의 프로필을 만들 수 있으며 시청 기록과 즐겨찾기가 각각 저장됩니다.","th":"สร้างได้สูงสุด 8 โปรไฟล์ แต่ละโปรไฟล์มีประวัติและรายการโปรดแยกกัน","fr":"Jusqu’à 8 profils, chacun avec son historique et ses favoris.","es":"Hasta 8 perfiles, cada uno con su historial y favoritos."],
+            "Tắt hồ sơ để vào thẳng trang chủ, không cần chọn hồ sơ.": ["en":"Turn profiles off to open Home directly without choosing a profile.","zh-Hans":"关闭个人资料后将直接进入首页，无需选择资料。","ja":"プロフィールをオフにすると選択画面を省略してホームを開きます。","ko":"프로필을 끄면 프로필 선택 없이 홈으로 바로 이동합니다.","th":"ปิดโปรไฟล์เพื่อเข้าสู่หน้าหลักโดยตรง","fr":"Désactivez les profils pour accéder directement à l’accueil.","es":"Desactiva los perfiles para ir directamente al inicio."],
+            "Chọn thể loại bạn thường xem. Sở thích được lưu riêng cho từng hồ sơ.": ["en":"Choose your favorite genres. Preferences are saved separately for each profile.","zh-Hans":"选择常看的类型。偏好会按个人资料分别保存。","ja":"よく見るジャンルを選択します。好みはプロフィールごとに保存されます。","ko":"즐겨 보는 장르를 선택하세요. 취향은 프로필별로 저장됩니다.","th":"เลือกแนวที่ชอบ ระบบจะบันทึกแยกตามโปรไฟล์","fr":"Choisissez vos genres préférés. Les préférences sont propres à chaque profil.","es":"Elige tus géneros favoritos. Las preferencias se guardan por perfil."],
+            "Chủ đề được áp dụng ngay cho giao diện ứng dụng.": ["en":"The theme is applied immediately throughout the app.","zh-Hans":"主题会立即应用到整个应用。","ja":"テーマはアプリ全体にすぐ反映されます。","ko":"테마가 앱 전체에 즉시 적용됩니다.","th":"ธีมจะมีผลกับทั้งแอปทันที","fr":"Le thème est immédiatement appliqué à toute l’application.","es":"El tema se aplica inmediatamente en toda la aplicación."]
+        ]
+        return translations[vietnamese]?[language] ?? extra[vietnamese]?[language] ?? vietnamese
     }
 }
 
