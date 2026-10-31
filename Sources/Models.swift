@@ -1,6 +1,6 @@
 import Foundation
 
-struct Movie: Identifiable, Decodable, Hashable {
+struct Movie: Identifiable, Codable, Hashable {
     let id: String
     let name: String
     let originName: String
@@ -12,7 +12,7 @@ struct Movie: Identifiable, Decodable, Hashable {
     let episodeCurrent: String?
 
     enum CodingKeys: String, CodingKey {
-        case name, slug, year, quality
+        case id, name, slug, year, quality
         case originName = "origin_name"
         case posterPath = "poster_url"
         case thumbPath = "thumb_url"
@@ -23,13 +23,26 @@ struct Movie: Identifiable, Decodable, Hashable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? "Chưa có tên"
         slug = try c.decodeIfPresent(String.self, forKey: .slug) ?? UUID().uuidString
-        id = slug
+        id = (try c.decodeIfPresent(String.self, forKey: .id)) ?? slug
         originName = try c.decodeIfPresent(String.self, forKey: .originName) ?? ""
         posterPath = try c.decodeIfPresent(String.self, forKey: .posterPath) ?? ""
         thumbPath = try c.decodeIfPresent(String.self, forKey: .thumbPath) ?? posterPath
         year = try c.decodeIfPresent(Int.self, forKey: .year)
         quality = try c.decodeIfPresent(String.self, forKey: .quality)
         episodeCurrent = try c.decodeIfPresent(String.self, forKey: .episodeCurrent)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(originName, forKey: .originName)
+        try c.encode(slug, forKey: .slug)
+        try c.encode(posterPath, forKey: .posterPath)
+        try c.encode(thumbPath, forKey: .thumbPath)
+        try c.encodeIfPresent(year, forKey: .year)
+        try c.encodeIfPresent(quality, forKey: .quality)
+        try c.encodeIfPresent(episodeCurrent, forKey: .episodeCurrent)
     }
 
     var posterURL: URL? { Self.imageURL(posterPath) }
