@@ -418,7 +418,7 @@ struct VideoPlayerView: View {
                         }
                         if !subtitleOptions.isEmpty {
                             Section(T("Phụ đề nhúng")) {
-                                ForEach(Array(subtitleOptions.enumerated()), id: \\.offset) { _, option in
+                                ForEach(Array(subtitleOptions.enumerated()), id: \.offset) { _, option in
                                     Button(option.displayName) {
                                         if let group = subtitleGroup {
                                             player.currentItem?.select(option, in: group)
@@ -436,7 +436,7 @@ struct VideoPlayerView: View {
                                 Button(T("Tăng cỡ chữ")) { setSubtitleSize(min(40, subtitleFontSize + 2)) }
                                 Button(T("Giảm cỡ chữ")) { setSubtitleSize(max(14, subtitleFontSize - 2)) }
                                 Menu(T("Màu chữ")) {
-                                    ForEach(["Trắng", "Vàng", "Xanh", "Hồng"], id: \\.self) { color in
+                                    ForEach(["Trắng", "Vàng", "Xanh", "Hồng"], id: \.self) { color in
                                         Button(color) { setSubtitleColor(color) }
                                     }
                                 }
