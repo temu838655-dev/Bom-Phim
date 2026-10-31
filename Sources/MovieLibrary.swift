@@ -11,6 +11,10 @@ final class MovieLibrary: ObservableObject {
         self.profileID = profileID
         favorites = load(favoritesKey)
         history = load(historyKey)
+        if profileID == "default" {
+            if favorites.isEmpty { favorites = load("bomphim.favorites"); save(favorites, key: favoritesKey) }
+            if history.isEmpty { history = load("bomphim.history"); save(history, key: historyKey) }
+        }
     }
 
     private var favoritesKey: String { "bomphim.favorites.\(profileID)" }
