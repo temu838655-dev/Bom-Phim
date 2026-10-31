@@ -12,8 +12,12 @@ final class ProfileStore: ObservableObject {
     static let shared = ProfileStore()
     @Published private(set) var profiles: [BomProfile] = []
     @Published var activeProfileID: String = "default" {
-        didSet { UserDefaults.standard.set(activeProfileID, forKey: "bomphim.profile.active") }
+        didSet {
+            UserDefaults.standard.set(activeProfileID, forKey: "bomphim.profile.active")
+            loadPreferences()
+        }
     }
+    @Published private(set) var preferredGenres: Set<String> = []
 
     private let profilesKey = "bomphim.profile.list"
 
@@ -37,9 +41,22 @@ final class ProfileStore: ObservableObject {
            let data = try? JSONEncoder().encode(loaded) {
             UserDefaults.standard.set(data, forKey: profilesKey)
         }
+        loadPreferences()
     }
 
-    var activeProfile: BomProfile? { profiles.first { $0.id == activeProfileID } }\n\n    func togglePreferredGenre(_ genre: String) {\n        if preferredGenres.contains(genre) { preferredGenres.remove(genre) }\n        else { preferredGenres.insert(genre) }\n        UserDefaults.standard.set(Array(preferredGenres).sorted(), forKey: preferencesKey)\n    }\n\n    private var preferencesKey: String { "bomphim.profile.preferences.\\(activeProfileID)" }\n\n    private func loadPreferences() {\n        preferredGenres = Set(UserDefaults.standard.stringArray(forKey: preferencesKey) ?? [])\n    }
+    var activeProfile: BomProfile? { profiles.first { $0.id == activeProfileID } }
+
+    func togglePreferredGenre(_ genre: String) {
+        if preferredGenres.contains(genre) { preferredGenres.remove(genre) }
+        else { preferredGenres.insert(genre) }
+        UserDefaults.standard.set(Array(preferredGenres).sorted(), forKey: preferencesKey)
+    }
+
+    private var preferencesKey: String { "bomphim.profile.preferences.\(activeProfileID)" }
+
+    private func loadPreferences() {
+        preferredGenres = Set(UserDefaults.standard.stringArray(forKey: preferencesKey) ?? [])
+    }
 
     func addProfile(name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
