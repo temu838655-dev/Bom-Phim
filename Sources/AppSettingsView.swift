@@ -163,7 +163,7 @@ enum PINStore {
     private static let service = "com.bomphim.profile"
 
     static func hasPIN(for profileID: String) -> Bool {
-        SecItemCopyMatching(baseQuery(for: profileID) as CFDictionary, nil) == errSecSuccess
+        var query = baseQuery(for: profileID)\n        query[kSecReturnData as String] = false\n        query[kSecMatchLimit as String] = kSecMatchLimitOne\n        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 
     static func verify(_ pin: String, for profileID: String) -> Bool {
