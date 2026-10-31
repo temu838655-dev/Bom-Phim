@@ -16,7 +16,33 @@ private enum BomTheme {
 }
 
 struct MainTabView: View {
+    @EnvironmentObject private var library: MovieLibrary
+    @StateObject private var profileStore = ProfileStore.shared
+    @AppStorage("bomphim.profile.enabled") private var profileEnabled = false
+    @State private var isUnlocked = false
+    @State private var pendingProfileID: String?
+    @State private var pin = ""
+    @State private var pinError: String?
+
     var body: some View {
+        Group {
+            if profileEnabled && !isUnlocked {
+                profileAccess
+            } else {
+                tabs
+            }
+        }
+        .onAppear {
+            if !profileEnabled { isUnlocked = true }
+        }
+        .onChange(of: profileEnabled) { enabled in
+            isUnlocked = !enabled
+            pin = ""
+            pinError = nil
+        }
+    }
+
+    private var tabs: some View {
         TabView {
             HomeView()
                 .tabItem { Label("Trang chủ", systemImage: "house.fill") }
@@ -29,6 +55,59 @@ struct MainTabView: View {
         }
         .tint(BomTheme.red)
         .background(BomTheme.background)
+    }
+
+    private var profileAccess: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 42)).foregroundStyle(BomTheme.red)
+                Text("Chọn hồ sơ").font(.largeTitle.bold())
+                Text("Chọn hồ sơ để xem thư viện và lịch sử riêng.")
+                    .foregroundStyle(.secondary).multilineTextAlignment(.center)
+                ForEach(profileStore.profiles) { profile in
+                    Button {
+                        pendingProfileID = profile.id
+                        pin = ""
+                        pinError = nil
+                        if !PINStore.hasPIN { unlockSelectedProfile() }
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.crop.circle.fill").font(.title2)
+                            Text(profile.name).font(.headline)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .padding().background(BomTheme.panel, in: RoundedRectangle(cornerRadius: 14))
+                    }
+                    .buttonStyle(.plain)
+                }
+                if pendingProfileID != nil && PINStore.hasPIN {
+                    SecureField("Nhập mã PIN hồ sơ", text: $pin)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.top, 8)
+                    Button("Mở hồ sơ") {
+                        if PINStore.verify(pin) { unlockSelectedProfile() }
+                        else { pinError = "Mã PIN không chính xác." }
+                    }
+                    .buttonStyle(.borderedProminent).tint(BomTheme.red)
+                    if let pinError { Text(pinError).foregroundStyle(.red).font(.footnote) }
+                }
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(BomTheme.background)
+        }
+    }
+
+    private func unlockSelectedProfile() {
+        guard let id = pendingProfileID else { return }
+        profileStore.activeProfileID = id
+        library.switchProfile(id)
+        isUnlocked = true
+        pendingProfileID = nil
+        pin = ""
     }
 }
 
