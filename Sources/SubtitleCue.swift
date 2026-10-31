@@ -13,31 +13,42 @@ enum SubtitleParser {
             .replacingOccurrences(of: "\\r\\n", with: "\\n")
             .replacingOccurrences(of: "\\r", with: "\\n")
             .replacingOccurrences(of: "\\u{FEFF}", with: "")
-        let blocks = normalized.components(separatedBy: "\\n\\n")
-        var cues: [SubtitleCue] = []
+        let lines = normalized.components(separatedBy: "\\n")
+        var blocks: [[String]] = []
+        var currentBlock: [String] = []
 
+        // Treat blank lines containing spaces/tabs as cue separators too.
+        for line in lines {
+            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if !currentBlock.isEmpty {
+                    blocks.append(currentBlock)
+                    currentBlock = []
+                }
+            } else {
+                currentBlock.append(line)
+            }
+        }
+        if !currentBlock.isEmpty { blocks.append(currentBlock) }
+
+        var cues: [SubtitleCue] = []
         for (index, block) in blocks.enumerated() {
-            let lines = block.components(separatedBy: "\\n")
-            guard let timingIndex = lines.firstIndex(where: { $0.contains("-->") }) else { continue }
-            let timingLine = lines[timingIndex]
-            let parts = timingLine.components(separatedBy: "-->")
+            guard let timingIndex = block.firstIndex(where: { $0.contains("-->") }) else { continue }
+            let parts = block[timingIndex].components(separatedBy: "-->")
             guard parts.count == 2,
                   let start = parseTime(parts[0]),
                   let end = parseTime(parts[1]),
                   end > start else { continue }
 
-            let text = lines.dropFirst(timingIndex + 1)
+            let text = block.dropFirst(timingIndex + 1)
                 .joined(separator: "\\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { continue }
             cues.append(SubtitleCue(id: index, start: start, end: end, text: text))
         }
-
         return cues.sorted { $0.start < $1.start }
     }
 
     private static func parseTime(_ raw: String) -> TimeInterval? {
-        // VTT cue settings may follow the timestamp, e.g. "00:01.200 align:start".
         let timestamp = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             .components(separatedBy: .whitespaces)
             .first ?? ""
@@ -45,9 +56,9 @@ enum SubtitleParser {
         let parts = normalized.components(separatedBy: ":")
         guard parts.count == 2 || parts.count == 3 else { return nil }
 
-        let seconds: Double
-        let minutes: Double
         let hours: Double
+        let minutes: Double
+        let seconds: Double
         if parts.count == 3 {
             guard let h = Double(parts[0]), let m = Double(parts[1]), let s = Double(parts[2]) else { return nil }
             hours = h
@@ -59,8 +70,7 @@ enum SubtitleParser {
             minutes = m
             seconds = s
         }
-
-        guard minutes >= 0, minutes < 60, seconds >= 0, seconds < 60 else { return nil }
+        guard hours >= 0, minutes >= 0, minutes < 60, seconds >= 0, seconds < 60 else { return nil }
         return hours * 3600 + minutes * 60 + seconds
     }
 }
