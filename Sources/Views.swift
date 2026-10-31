@@ -43,7 +43,7 @@ struct HomeView: View {
                     if isLoading && movies.isEmpty {
                         ProgressView("Đang tải phim…").frame(maxWidth: .infinity).padding(40)
                     } else if let errorMessage, movies.isEmpty {
-                        ContentUnavailableView("Chưa tải được phim", systemImage: "wifi.exclamationmark", description: Text(errorMessage))
+                        EmptyStateView(title: "Chưa tải được phim", symbol: "wifi.exclamationmark", message: errorMessage)
                             .padding()
                         Button("Thử lại") { Task { await loadMovies() } }
                             .buttonStyle(.borderedProminent).tint(BomTheme.red)
@@ -158,7 +158,7 @@ struct SearchView: View {
                 if isLoading { ProgressView().padding() }
                 else if let errorMessage { Text(errorMessage).foregroundStyle(.secondary).padding() }
                 else if results.isEmpty {
-                    ContentUnavailableView("Tìm phim", systemImage: "magnifyingglass", description: Text("Nhập tên phim rồi nhấn Tìm trên bàn phím."))
+                    EmptyStateView(title: "Tìm phim", symbol: "magnifyingglass", message: "Nhập tên phim rồi nhấn Tìm trên bàn phím.")
                 } else {
                     ScrollView { MovieGrid(movies: results) }
                 }
@@ -166,6 +166,7 @@ struct SearchView: View {
             }
             .background(BomTheme.background)
             .navigationTitle("Tìm kiếm")
+            .navigationDestination(for: Movie.self) { MovieDetailView(movie: $0) }
         }
     }
 
@@ -287,5 +288,24 @@ struct LibraryView: View {
             .background(BomTheme.background)
             .navigationTitle("Thư viện")
         }
+    }
+}
+
+
+struct EmptyStateView: View {
+    let title: String
+    let symbol: String
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 38))
+                .foregroundStyle(.secondary)
+            Text(title).font(.headline)
+            Text(message).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(30)
     }
 }
