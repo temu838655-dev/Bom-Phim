@@ -363,16 +363,44 @@ struct PlayerItem: Identifiable {
 struct VideoPlayerView: View {
     let url: URL
     @Environment(\.dismiss) private var dismiss
+    @State private var player = AVPlayer()
+    @State private var isLandscapeRequested = false
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color.black.ignoresSafeArea()
-            VideoPlayer(player: AVPlayer(url: url)).ignoresSafeArea()
+            VideoPlayer(player: player).ignoresSafeArea()
             Button { dismiss() } label: {
                 Image(systemName: "xmark").font(.headline).foregroundStyle(.white)
                     .padding(12).background(.ultraThinMaterial, in: Circle())
             }.padding(.top, 18).padding(.leading, 16)
         }
         .statusBarHidden()
+        .onAppear {
+            player = AVPlayer(url: url)
+            requestOrientation(.landscape)
+            isLandscapeRequested = true
+            player.play()
+        }
+        .onDisappear {
+            player.pause()
+            if isLandscapeRequested { requestOrientation(.portrait) }
+        }
+    }
+
+    private func requestOrientation(_ orientation: UIInterfaceOrientationMask) {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) else { return }
+        if #available(iOS 16.0, *) {
+            scene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
+            scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+        } else {
+            UIDevice.current.setValue(
+                orientation == .landscape ? UIInterfaceOrientation.landscapeRight.rawValue : UIInterfaceOrientation.portrait.rawValue,
+                forKey: "orientation"
+            )
+        }
     }
 }
 
