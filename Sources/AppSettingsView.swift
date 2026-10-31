@@ -37,15 +37,15 @@ struct AppSettingsView: View {
                         HStack {
                             Label(T("Mã PIN hồ sơ"), systemImage: "lock.fill")
                             Spacer()
-                            Text(hasPIN ? "Đã thiết lập" : "Chưa thiết lập")
+                            Text(T(hasPIN ? "Đã thiết lập" : "Chưa thiết lập"))
                                 .foregroundStyle(hasPIN ? .green : .secondary)
                         }
                         SecureField(T("Nhập mã PIN (4–8 số)"), text: $pin).keyboardType(.numberPad)
                         SecureField(T("Nhập lại mã PIN"), text: $pinConfirmation).keyboardType(.numberPad)
-                        Button(hasPIN ? "Đổi mã PIN" : "Lưu mã PIN") { savePIN() }
+                        Button(T(hasPIN ? "Đổi mã PIN" : "Lưu mã PIN")) { savePIN() }
                             .disabled(pin.count < 4 || pin.count > 8 || pin != pinConfirmation || !pin.allSatisfy(\.isNumber))
                         if hasPIN {
-                            Button("Xóa mã PIN", role: .destructive) {
+                            Button(T("Xóa mã PIN"), role: .destructive) {
                                 PINStore.delete(for: profileStore.activeProfileID)
                                 pin = ""
                                 pinConfirmation = ""
@@ -129,7 +129,7 @@ struct AppSettingsView: View {
                     Text(T("Chủ đề được áp dụng ngay cho giao diện ứng dụng."))
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                if let message { Section { Text(message).font(.footnote) } }
+                if let message { Section { Text(T(message)).font(.footnote) } }
             }
             .scrollContentBackground(.hidden)
             .background(Color(.systemGroupedBackground))
