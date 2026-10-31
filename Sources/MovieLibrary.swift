@@ -5,11 +5,20 @@ import Combine
 final class MovieLibrary: ObservableObject {
     @Published private(set) var favorites: [Movie] = []
     @Published private(set) var history: [Movie] = []
+    private(set) var profileID: String
 
-    private let favoritesKey = "bomphim.favorites"
-    private let historyKey = "bomphim.history"
+    init(profileID: String = "default") {
+        self.profileID = profileID
+        favorites = load(favoritesKey)
+        history = load(historyKey)
+    }
 
-    init() {
+    private var favoritesKey: String { "bomphim.favorites.\(profileID)" }
+    private var historyKey: String { "bomphim.history.\(profileID)" }
+
+    func switchProfile(_ id: String) {
+        guard id != profileID else { return }
+        profileID = id
         favorites = load(favoritesKey)
         history = load(historyKey)
     }
