@@ -28,7 +28,7 @@ final class PhimAPI {
     }
 
     func search(keyword: String) async throws -> [Movie] {
-        var components = URLComponents(url: baseURL.appendingPathComponent("v1/api/tim-kiem"))!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/api/tim-kiem"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "keyword", value: keyword),
             URLQueryItem(name: "limit", value: "24")
