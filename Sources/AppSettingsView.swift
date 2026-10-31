@@ -30,7 +30,7 @@ struct AppSettingsView: View {
                 Section("Hồ sơ người dùng") {
                     Toggle("Sử dụng hồ sơ", isOn: $profileEnabled)
                     if profileEnabled {
-                        TextField("Tên hồ sơ", text: $profileName)
+                        TextField("Tên hồ sơ", text: Binding(\n                            get: { profileStore.activeProfile?.name ?? profileName },\n                            set: { profileStore.renameProfile(id: profileStore.activeProfileID, name: $0) }\n                        ))
                         HStack {
                             Label("Mã PIN hồ sơ", systemImage: "lock.fill")
                             Spacer()
