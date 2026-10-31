@@ -474,8 +474,17 @@ struct VideoPlayerView: View {
         }
         .onDisappear {
             player.pause()
-            if let timeObserver { player.removeTimeObserver(timeObserver) }
-            if isLandscapeRequested { requestOrientation(.portrait) }
+            if let timeObserver {
+                player.removeTimeObserver(timeObserver)
+                self.timeObserver = nil
+            }
+            currentSubtitle = ""
+            subtitleCues = []
+            player.replaceCurrentItem(with: nil)
+            if isLandscapeRequested {
+                requestOrientation(.portrait)
+                isLandscapeRequested = false
+            }
         }
     }
 
