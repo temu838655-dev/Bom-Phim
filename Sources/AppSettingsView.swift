@@ -43,8 +43,7 @@ struct AppSettingsView: View {
                             .disabled(pin.count < 4 || pin.count > 8 || pin != pinConfirmation || !pin.allSatisfy(\.isNumber))
                         if hasPIN {
                             Button("Xóa mã PIN", role: .destructive) {
-                                PINStore.delete()
-                                hasPIN = false
+                                PINStore.delete(for: profileStore.activeProfileID)
                                 pin = ""
                                 pinConfirmation = ""
                                 message = "Đã xóa mã PIN trên thiết bị."
@@ -140,8 +139,7 @@ struct AppSettingsView: View {
             message = "Mã PIN phải gồm 4–8 chữ số và hai lần nhập phải trùng nhau."
             return
         }
-        if PINStore.save(pin) {
-            hasPIN = true
+        if PINStore.save(pin, for: profileStore.activeProfileID) {
             pin = ""
             pinConfirmation = ""
             message = "Đã lưu mã PIN hồ sơ an toàn trên thiết bị."
