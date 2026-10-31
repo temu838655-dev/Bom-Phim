@@ -503,9 +503,6 @@ struct VideoPlayerView: View {
             player.play()
             refreshDolbyAtmosStatus()
         }
-        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.renderingModeChangeNotification)) { _ in
-            refreshDolbyAtmosStatus()
-        }
         .onChange(of: audioMode) { newMode in
             guard let item = player.currentItem else { return }
             configureSpatialAudio(for: item, mode: newMode)
