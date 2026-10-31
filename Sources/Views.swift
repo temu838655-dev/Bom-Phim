@@ -33,6 +33,7 @@ struct MainTabView: View {
                 tabs
             }
         }
+        .id(theme)
         .onAppear {
             library.switchProfile(profileStore.activeProfileID)
             if !profileEnabled { isUnlocked = true }
@@ -220,7 +221,7 @@ struct MovieGrid: View {
                         }
                         .frame(height: 155).frame(maxWidth: .infinity).clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 10))
-                        Text(movie.name).font(.caption.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
+                        Text(movie.name).font(.caption.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
                         Text(T(movie.year.map(String.init) ?? "Đang cập nhật")).font(.caption2).foregroundStyle(.secondary)
                     }
                 }.buttonStyle(.plain)
