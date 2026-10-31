@@ -484,7 +484,11 @@ struct VideoPlayerView: View {
             guard let fileURL = try result.get().first else { return }
             let granted = fileURL.startAccessingSecurityScopedResource()
             defer { if granted { fileURL.stopAccessingSecurityScopedResource() } }
-            let content = try String(contentsOf: fileURL, encoding: .utf8)
+            let data = try Data(contentsOf: fileURL)
+            guard let content = decodeSubtitleData(data) else {
+                subtitleImportError = T("Không đọc được mã hóa tệp phụ đề. Hãy lưu tệp dưới dạng UTF-8.")
+                return
+            }
             let parsed = SubtitleParser.parse(content)
             guard !parsed.isEmpty else {
                 subtitleImportError = T("Không tìm thấy phụ đề hợp lệ trong tệp.")
@@ -500,12 +504,26 @@ struct VideoPlayerView: View {
         }
     }
 
+    private func decodeSubtitleData(_ data: Data) -> String? {
+        // Subtitle files may be saved in UTF-8, UTF-16, or legacy Windows encoding.
+        let encodings: [String.Encoding] = [.utf8, .utf16, .utf16LittleEndian, .utf16BigEndian, .windowsCP1252]
+        for encoding in encodings {
+            if let text = String(data: data, encoding: encoding), !text.isEmpty {
+                return text
+            }
+        }
+        return nil
+    }
+
     private func installSubtitleTimeObserver() {
         let interval = CMTime(seconds: 0.25, preferredTimescale: 600)
         timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
             let seconds = time.seconds
             guard seconds.isFinite else { return }
-            currentSubtitle = subtitleCues.first(where: { seconds >= $0.start && seconds <= $0.end })?.text ?? ""
+            // If cues overlap, prefer the most recently started cue.
+            currentSubtitle = subtitleCues
+                .filter { seconds >= $0.start && seconds < $0.end }
+                .max(by: { $0.start < $1.start })?.text ?? ""
         }
     }
 
