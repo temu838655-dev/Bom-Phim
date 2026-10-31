@@ -20,28 +20,28 @@ struct AppSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Ngôn ngữ") {
-                    Picker("Ngôn ngữ ứng dụng", selection: $language) {
+                Section(T("Ngôn ngữ")) {
+                    Picker(T("Ngôn ngữ ứng dụng"), selection: $language) {
                         ForEach(languages, id: \.self) { Text($0).tag($0) }
                     }
-                    Text("Lựa chọn được lưu trên thiết bị. Bản dịch toàn bộ giao diện sẽ được bổ sung đồng bộ ở bước bản địa hóa.")
+                    Text(T("Chọn ngôn ngữ để áp dụng cho các mục giao diện đã được dịch."))
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Section("Hồ sơ người dùng") {
-                    Toggle("Sử dụng hồ sơ", isOn: $profileEnabled)
+                Section(T("Hồ sơ người dùng")) {
+                    Toggle(T("Sử dụng hồ sơ"), isOn: $profileEnabled)
                     if profileEnabled {
-                        TextField("Tên hồ sơ", text: Binding(
+                        TextField(T("Tên hồ sơ"), text: Binding(
                             get: { profileStore.activeProfile?.name ?? profileName },
                             set: { profileStore.renameProfile(id: profileStore.activeProfileID, name: $0) }
                         ))
                         HStack {
-                            Label("Mã PIN hồ sơ", systemImage: "lock.fill")
+                            Label(T("Mã PIN hồ sơ"), systemImage: "lock.fill")
                             Spacer()
                             Text(hasPIN ? "Đã thiết lập" : "Chưa thiết lập")
                                 .foregroundStyle(hasPIN ? .green : .secondary)
                         }
-                        SecureField("Nhập mã PIN (4–8 số)", text: $pin).keyboardType(.numberPad)
-                        SecureField("Nhập lại mã PIN", text: $pinConfirmation).keyboardType(.numberPad)
+                        SecureField(T("Nhập mã PIN (4–8 số)"), text: $pin).keyboardType(.numberPad)
+                        SecureField(T("Nhập lại mã PIN"), text: $pinConfirmation).keyboardType(.numberPad)
                         Button(hasPIN ? "Đổi mã PIN" : "Lưu mã PIN") { savePIN() }
                             .disabled(pin.count < 4 || pin.count > 8 || pin != pinConfirmation || !pin.allSatisfy(\.isNumber))
                         if hasPIN {
@@ -52,11 +52,11 @@ struct AppSettingsView: View {
                                 message = "Đã xóa mã PIN trên thiết bị."
                             }
                         }
-                        Text("Mã PIN được lưu trong Keychain của iPhone và dùng để mở khóa hồ sơ.")
+                        Text(T("Mã PIN được lưu trong Keychain của iPhone và dùng để mở khóa hồ sơ."))
                             .font(.caption).foregroundStyle(.secondary)
                         HStack {
-                            TextField("Tên hồ sơ mới", text: $newProfileName)
-                            Button("Thêm") {
+                            TextField(T("Tên hồ sơ mới"), text: $newProfileName)
+                            Button(T("Thêm")) {
                                 profileStore.addProfile(name: newProfileName)
                                 newProfileName = ""
                             }
@@ -83,16 +83,16 @@ struct AppSettingsView: View {
                                 }
                             }
                         }
-                        Text("Tối đa 8 hồ sơ. Mỗi hồ sơ có lịch sử xem và danh sách yêu thích riêng.")
+                        Text(T("Tối đa 8 hồ sơ. Mỗi hồ sơ có lịch sử xem và danh sách yêu thích riêng."))
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
-                        Text("Tắt hồ sơ để vào thẳng trang chủ, không cần chọn hồ sơ.")
+                        Text(T("Tắt hồ sơ để vào thẳng trang chủ, không cần chọn hồ sơ."))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if profileEnabled {
-                    Section("Sở thích phim của hồ sơ") {
-                        Text("Chọn thể loại bạn thường xem. Sở thích được lưu riêng cho từng hồ sơ.")
+                    Section(T("Sở thích phim của hồ sơ")) {
+                        Text(T("Chọn thể loại bạn thường xem. Sở thích được lưu riêng cho từng hồ sơ."))
                             .font(.caption).foregroundStyle(.secondary)
                         ForEach(["Hành động", "Hài", "Tình cảm", "Kinh dị", "Viễn tưởng", "Hoạt hình", "Tâm lý", "Phiêu lưu", "Tài liệu", "Gia đình"], id: \.self) { genre in
                             Button {
@@ -112,8 +112,8 @@ struct AppSettingsView: View {
                         }
                     }
                 }
-                Section("Giao diện") {
-                    Picker("Chủ đề", selection: $theme) {
+                Section(T("Giao diện")) {
+                    Picker(T("Chủ đề"), selection: $theme) {
                         ForEach(themes, id: \.self) { Text($0).tag($0) }
                     }
                     ForEach(themes, id: \.self) { item in
@@ -126,14 +126,14 @@ struct AppSettingsView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { theme = item }
                     }
-                    Text("Chủ đề được lưu. Việc đồng bộ màu sắc cho tất cả màn hình sẽ tiếp tục được hoàn thiện.")
+                    Text(T("Chủ đề được áp dụng ngay cho giao diện ứng dụng."))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if let message { Section { Text(message).font(.footnote) } }
             }
             .scrollContentBackground(.hidden)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Cài đặt")
+            .navigationTitle(T("Cài đặt"))
         }
     }
 
