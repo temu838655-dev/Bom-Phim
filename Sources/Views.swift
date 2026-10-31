@@ -2,7 +2,7 @@ import SwiftUI
 import AVKit
 
 private enum BomTheme {
-    static let background = Color(red: 0.035, green: 0.035, blue: 0.045)
+    static var background: Color { (UserDefaults.standard.string(forKey: "bomphim.theme") ?? "Đỏ điện ảnh") == "Sáng tối giản" ? Color(red: 0.96, green: 0.96, blue: 0.98) : Color(red: 0.035, green: 0.035, blue: 0.045) }
     static let panel = Color(red: 0.105, green: 0.105, blue: 0.12)
     static var red: Color {
         switch UserDefaults.standard.string(forKey: "bomphim.theme") ?? "Đỏ điện ảnh" {
@@ -19,6 +19,7 @@ struct MainTabView: View {
     @EnvironmentObject private var library: MovieLibrary
     @StateObject private var profileStore = ProfileStore.shared
     @AppStorage("bomphim.profile.enabled") private var profileEnabled = false
+    @AppStorage("bomphim.theme") private var theme = "Đỏ điện ảnh"
     @State private var isUnlocked = false
     @State private var pendingProfileID: String?
     @State private var pin = ""
@@ -49,13 +50,13 @@ struct MainTabView: View {
     private var tabs: some View {
         TabView {
             HomeView()
-                .tabItem { Label("Trang chủ", systemImage: "house.fill") }
+                .tabItem { Label(T("Trang chủ"), systemImage: "house.fill") }
             SearchView()
-                .tabItem { Label("Tìm kiếm", systemImage: "magnifyingglass") }
+                .tabItem { Label(T("Tìm kiếm"), systemImage: "magnifyingglass") }
             LibraryView()
-                .tabItem { Label("Thư viện", systemImage: "bookmark.fill") }
+                .tabItem { Label(T("Thư viện"), systemImage: "bookmark.fill") }
             AppSettingsView()
-                .tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
+                .tabItem { Label(T("Cài đặt"), systemImage: "gearshape.fill") }
         }
         .tint(BomTheme.red)
         .background(BomTheme.background)
@@ -66,8 +67,8 @@ struct MainTabView: View {
             VStack(spacing: 18) {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 42)).foregroundStyle(BomTheme.red)
-                Text("Chọn hồ sơ").font(.largeTitle.bold())
-                Text("Chọn hồ sơ để xem thư viện và lịch sử riêng.")
+                Text(T("Chọn hồ sơ")).font(.largeTitle.bold())
+                Text(T("Chọn hồ sơ để xem thư viện và lịch sử riêng."))
                     .foregroundStyle(.secondary).multilineTextAlignment(.center)
                 ForEach(profileStore.profiles) { profile in
                     Button {
@@ -87,11 +88,11 @@ struct MainTabView: View {
                     .buttonStyle(.plain)
                 }
                 if pendingProfileID != nil && PINStore.hasPIN(for: pendingProfileID ?? "") {
-                    SecureField("Nhập mã PIN hồ sơ", text: $pin)
+                    SecureField(T("Nhập mã PIN hồ sơ"), text: $pin)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .padding(.top, 8)
-                    Button("Mở hồ sơ") {
+                    Button(T("Mở hồ sơ")) {
                         if let selectedID = pendingProfileID, PINStore.verify(pin, for: selectedID) { unlockSelectedProfile() }
                         else { pinError = "Mã PIN không chính xác." }
                     }
@@ -129,16 +130,16 @@ struct HomeView: View {
                         FeaturedMovieView(movie: featured)
                     }
                     HStack {
-                        Text("Mới cập nhật").font(.title2.bold())
+                        Text(T("Mới cập nhật")).font(.title2.bold())
                         Spacer()
-                        Text("PHIMAPI").font(.caption2.bold()).foregroundStyle(.secondary)
+                        Text(T("PHIMAPI")).font(.caption2.bold()).foregroundStyle(.secondary)
                     }.padding(.horizontal)
                     if isLoading && movies.isEmpty {
                         ProgressView("Đang tải phim…").frame(maxWidth: .infinity).padding(40)
                     } else if let errorMessage, movies.isEmpty {
                         EmptyStateView(title: "Chưa tải được phim", symbol: "wifi.exclamationmark", message: errorMessage)
                             .padding()
-                        Button("Thử lại") { Task { await loadMovies() } }
+                        Button(T("Thử lại")) { Task { await loadMovies() } }
                             .buttonStyle(.borderedProminent).tint(BomTheme.red)
                     } else {
                         MovieGrid(movies: movies)
@@ -156,8 +157,8 @@ struct HomeView: View {
     private var header: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("BOM").font(.system(size: 29, weight: .black, design: .rounded)).foregroundStyle(BomTheme.red)
-                Text("PHIM").font(.system(size: 12, weight: .heavy, design: .rounded)).tracking(5)
+                Text(T("BOM")).font(.system(size: 29, weight: .black, design: .rounded)).foregroundStyle(BomTheme.red)
+                Text(T("PHIM")).font(.system(size: 12, weight: .heavy, design: .rounded)).tracking(5)
             }
             Spacer()
             Image(systemName: "person.crop.circle").font(.title2).foregroundStyle(.white.opacity(0.85))
@@ -186,13 +187,13 @@ struct FeaturedMovieView: View {
                 .frame(height: 330).clipped()
                 LinearGradient(colors: [.clear, .black.opacity(0.92)], startPoint: .center, endPoint: .bottom)
                 VStack(alignment: .leading, spacing: 9) {
-                    Text("ĐỀ XUẤT HÔM NAY").font(.caption.bold()).tracking(2).foregroundStyle(BomTheme.red)
+                    Text(T("ĐỀ XUẤT HÔM NAY")).font(.caption.bold()).tracking(2).foregroundStyle(BomTheme.red)
                     Text(movie.name).font(.largeTitle.bold()).lineLimit(2)
                     HStack(spacing: 10) {
                         Label(movie.year.map(String.init) ?? "Mới", systemImage: "calendar")
                         if let quality = movie.quality { Text(quality) }
                     }.font(.caption).foregroundStyle(.white.opacity(0.75))
-                    Label("Xem chi tiết", systemImage: "play.fill").font(.subheadline.bold())
+                    Label(T("Xem chi tiết"), systemImage: "play.fill").font(.subheadline.bold())
                         .padding(.horizontal, 16).padding(.vertical, 10)
                         .background(BomTheme.red, in: Capsule())
                 }.padding(20)
@@ -220,7 +221,7 @@ struct MovieGrid: View {
                         .frame(height: 155).frame(maxWidth: .infinity).clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         Text(movie.name).font(.caption.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
-                        Text(movie.year.map(String.init) ?? "Đang cập nhật").font(.caption2).foregroundStyle(.secondary)
+                        Text(T(movie.year.map(String.init) ?? "Đang cập nhật")).font(.caption2).foregroundStyle(.secondary)
                     }
                 }.buttonStyle(.plain)
             }
@@ -239,7 +240,7 @@ struct SearchView: View {
             VStack {
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField("Tên phim bạn muốn tìm…", text: $keyword)
+                    TextField(T("Tên phim bạn muốn tìm…"), text: $keyword)
                         .submitLabel(.search)
                         .onSubmit { Task { await search() } }
                     if !keyword.isEmpty {
@@ -258,7 +259,7 @@ struct SearchView: View {
                 Spacer(minLength: 0)
             }
             .background(BomTheme.background)
-            .navigationTitle("Tìm kiếm")
+            .navigationTitle(T("Tìm kiếm"))
             .navigationDestination(for: Movie.self) { MovieDetailView(movie: $0) }
         }
     }
@@ -306,7 +307,7 @@ struct MovieDetailView: View {
                     }.font(.caption.bold()).foregroundStyle(.white.opacity(0.75))
                     if isLoading { ProgressView("Đang tải danh sách tập…") }
                     if let errorMessage { Text(errorMessage).foregroundStyle(.secondary) }
-                    Text("Chọn tập phim").font(.title3.bold())
+                    Text(T("Chọn tập phim")).font(.title3.bold())
                     if let servers = detail?.episodes {
                         ForEach(servers) { server in
                             Text(server.serverName).font(.headline).padding(.top, 8)
@@ -368,18 +369,18 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Yêu thích") {
-                    if library.favorites.isEmpty { Text("Chưa có phim yêu thích").foregroundStyle(.secondary) }
+                Section(T("Yêu thích")) {
+                    if library.favorites.isEmpty { Text(T("Chưa có phim yêu thích")).foregroundStyle(.secondary) }
                     ForEach(library.favorites) { movie in NavigationLink(movie.name) { MovieDetailView(movie: movie) } }
                 }
-                Section("Đã xem") {
-                    if library.history.isEmpty { Text("Lịch sử xem đang trống").foregroundStyle(.secondary) }
+                Section(T("Đã xem")) {
+                    if library.history.isEmpty { Text(T("Lịch sử xem đang trống")).foregroundStyle(.secondary) }
                     ForEach(library.history) { movie in NavigationLink(movie.name) { MovieDetailView(movie: movie) } }
                 }
             }
             .scrollContentBackground(.hidden)
             .background(BomTheme.background)
-            .navigationTitle("Thư viện")
+            .navigationTitle(T("Thư viện"))
         }
     }
 }
@@ -395,8 +396,8 @@ struct EmptyStateView: View {
             Image(systemName: symbol)
                 .font(.system(size: 38))
                 .foregroundStyle(.secondary)
-            Text(title).font(.headline)
-            Text(message).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Text(T(title)).font(.headline)
+            Text(T(message)).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(30)
