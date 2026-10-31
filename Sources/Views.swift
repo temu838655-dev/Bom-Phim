@@ -364,7 +364,7 @@ struct PlayerItem: Identifiable {
 
 struct VideoPlayerView: View {
     let url: URL
-    @Environment(\\.dismiss) private var dismiss
+    @Environment(\.dismiss) private var dismiss
     @State private var player = AVPlayer()
     @State private var isLandscapeRequested = false
     @State private var subtitleOptions: [AVMediaSelectionOption] = []
