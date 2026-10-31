@@ -8,12 +8,11 @@ struct AppSettingsView: View {
     @AppStorage("bomphim.profile.name") private var profileName = "Tôi"
     @State private var pin = ""
     @State private var pinConfirmation = ""
-    @State private var hasPIN = PINStore.hasPIN
     @State private var message: String?
     @StateObject private var profileStore = ProfileStore.shared
     @State private var newProfileName = ""
 
-    private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
+    private var hasPIN: Bool { PINStore.hasPIN(for: profileStore.activeProfileID) }\n\n    private let languages = ["Tiếng Việt", "English", "中文", "日本語", "한국어", "ไทย", "Français", "Español"]
     private let themes = ["Đỏ điện ảnh", "Xanh đại dương", "Tím neon", "Xanh ngọc", "Sáng tối giản"]
 
     var body: some View {
@@ -140,33 +139,37 @@ struct AppSettingsView: View {
 
 enum PINStore {
     private static let service = "com.bomphim.profile"
-    private static let account = "profile-pin"
-    static var hasPIN: Bool {
-        var query = baseQuery
-        query[kSecReturnData as String] = false
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
+
+    static func hasPIN(for profileID: String) -> Bool {
+        SecItemCopyMatching(baseQuery(for: profileID) as CFDictionary, nil) == errSecSuccess
     }
-    static func verify(_ pin: String) -> Bool {
-        var query = baseQuery
+
+    static func verify(_ pin: String, for profileID: String) -> Bool {
+        var query = baseQuery(for: profileID)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data, let saved = String(data: data, encoding: .utf8) else { return false }
+              let data = result as? Data,
+              let saved = String(data: data, encoding: .utf8) else { return false }
         return saved == pin
     }
-    static func save(_ pin: String) -> Bool {
-        delete()
-        var query = baseQuery
+
+    static func save(_ pin: String, for profileID: String) -> Bool {
+        delete(for: profileID)
+        var query = baseQuery(for: profileID)
         query[kSecValueData as String] = Data(pin.utf8)
         query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
     }
-    static func delete() { SecItemDelete(baseQuery as CFDictionary) }
-    private static var baseQuery: [String: Any] {
+
+    static func delete(for profileID: String) {
+        SecItemDelete(baseQuery(for: profileID) as CFDictionary)
+    }
+
+    private static func baseQuery(for profileID: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: service,
-         kSecAttrAccount as String: account]
+         kSecAttrAccount as String: "profile-pin-\(profileID)"]
     }
 }
