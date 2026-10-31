@@ -488,12 +488,17 @@ struct VideoPlayerView: View {
         .onAppear {
             configureAudioSession()
             let item = AVPlayerItem(url: url)
+            configureSpatialAudio(for: item)
             player = AVPlayer(playerItem: item)
             loadSubtitleOptions(from: item)
             installSubtitleTimeObserver()
             requestOrientation(.landscape)
             isLandscapeRequested = true
             player.play()
+        }
+        .onChange(of: audioMode) { newMode in
+            guard let item = player.currentItem else { return }
+            configureSpatialAudio(for: item, mode: newMode)
         }
         .onDisappear {
             player.pause()
@@ -512,9 +517,22 @@ struct VideoPlayerView: View {
         }
     }
 
+    private func configureSpatialAudio(for item: AVPlayerItem, mode: String? = nil) {
+        // This requests Apple's native AVPlayer spatial renderer for stereo and
+        // multichannel content. It does not synthesize Dolby Atmos metadata.
+        // The system and output route (e.g. compatible AirPods) decide whether
+        // spatial rendering is actually available/enabled.
+        let selectedMode = mode ?? audioMode
+        if selectedMode == "Tiêu chuẩn" {
+            item.allowedAudioSpatializationFormats = AVAudioSpatializationFormats(rawValue: 0)
+        } else {
+            item.allowedAudioSpatializationFormats = .monoStereoAndMultichannel
+        }
+    }
+
     private func configureAudioSession() {
-        // AVPlayer uses the system audio pipeline. iOS can select Atmos / spatial
-        // output when the media stream and connected audio device support it.
+        // AVPlayer uses the system audio pipeline. Spatial rendering is requested
+        // through AVPlayerItem.allowedAudioSpatializationFormats above.
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .moviePlayback, options: [.allowAirPlay, .allowBluetoothA2DP])
