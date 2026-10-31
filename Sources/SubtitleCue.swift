@@ -39,13 +39,34 @@ enum SubtitleParser {
                   let end = parseTime(parts[1]),
                   end > start else { continue }
 
-            let text = block.dropFirst(timingIndex + 1)
+            let rawText = block.dropFirst(timingIndex + 1)
                 .joined(separator: "\\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = cleanSubtitleText(rawText)
             guard !text.isEmpty else { continue }
             cues.append(SubtitleCue(id: index, start: start, end: end, text: text))
         }
         return cues.sorted { $0.start < $1.start }
+    }
+
+    private static func cleanSubtitleText(_ raw: String) -> String {
+        // Remove common SRT/VTT markup so tags are not rendered as literal text.
+        let pattern = "<[^>]+>"
+        let stripped: String
+        if let regex = try? NSRegularExpression(pattern: pattern) {
+            let range = NSRange(raw.startIndex..<raw.endIndex, in: raw)
+            stripped = regex.stringByReplacingMatches(in: raw, range: range, withTemplate: "")
+        } else {
+            stripped = raw
+        }
+        return stripped
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&quot;", with: "\\\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&nbsp;", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func parseTime(_ raw: String) -> TimeInterval? {
