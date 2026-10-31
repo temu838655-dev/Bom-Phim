@@ -34,6 +34,8 @@ struct MainTabView: View {
             }
         }
         .id(theme)
+        .environment(\.locale, Locale(identifier: AppLanguage.identifier))
+        .preferredColorScheme(theme == "Sáng tối giản" ? .light : .dark)
         .onAppear {
             library.switchProfile(profileStore.activeProfileID)
             if !profileEnabled { isUnlocked = true }
