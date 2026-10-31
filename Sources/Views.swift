@@ -523,10 +523,16 @@ struct VideoPlayerView: View {
         // The system and output route (e.g. compatible AirPods) decide whether
         // spatial rendering is actually available/enabled.
         let selectedMode = mode ?? audioMode
-        if selectedMode == "Tiêu chuẩn" {
+        switch selectedMode {
+        case "Tiêu chuẩn":
             item.allowedAudioSpatializationFormats = AVAudioSpatializationFormats(rawValue: 0)
-        } else {
+        case "Spatial Audio":
+            // Explicitly allow Apple's native spatial treatment of stereo too.
             item.allowedAudioSpatializationFormats = .monoStereoAndMultichannel
+        default:
+            // Automatic: leave spatial rendering to the system for multichannel
+            // sources, without explicitly requesting stereo upmixing.
+            item.allowedAudioSpatializationFormats = .multichannel
         }
     }
 
