@@ -121,14 +121,15 @@ struct HomeView: View {
     @State private var movies: [Movie] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var featuredIndex = 0
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     header
-                    if let featured = movies.first {
-                        FeaturedMovieView(movie: featured)
+                    if !movies.isEmpty {
+                        FeaturedMovieView(movie: movies[featuredIndex % movies.count])
                     }
                     HStack {
                         Text(T("Mới cập nhật")).font(.title2.bold())
@@ -150,8 +151,17 @@ struct HomeView: View {
             }
             .background(BomTheme.background)
             .toolbar(.hidden, for: .navigationBar)
-            .task { if movies.isEmpty { await loadMovies() } }
-            .refreshable { await loadMovies() }
+            .task {
+                if movies.isEmpty { await loadMovies() }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(6))
+                    guard !Task.isCancelled, !movies.isEmpty else { continue }
+                    withAnimation(.easeInOut(duration: 0.55)) {
+                        featuredIndex = (featuredIndex + 1) % movies.count
+                    }
+                }
+            }
+            .refreshable { await loadMovies(); featuredIndex = 0 }
         }
     }
 
@@ -171,6 +181,7 @@ struct HomeView: View {
         defer { isLoading = false }
         do {
             movies = try await PhimAPI.shared.latest()
+            featuredIndex = 0
             errorMessage = nil
         } catch { errorMessage = error.localizedDescription }
     }
