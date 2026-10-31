@@ -11,26 +11,32 @@ struct BomProfile: Identifiable, Codable, Hashable {
 final class ProfileStore: ObservableObject {
     static let shared = ProfileStore()
     @Published private(set) var profiles: [BomProfile] = []
-    @Published var activeProfileID: String {
-        didSet {
-            UserDefaults.standard.set(activeProfileID, forKey: "bomphim.profile.active")
-        }
+    @Published var activeProfileID: String = "default" {
+        didSet { UserDefaults.standard.set(activeProfileID, forKey: "bomphim.profile.active") }
     }
 
     private let profilesKey = "bomphim.profile.list"
 
     private init() {
+        let loaded: [BomProfile]
         if let data = UserDefaults.standard.data(forKey: profilesKey),
            let saved = try? JSONDecoder().decode([BomProfile].self, from: data),
            !saved.isEmpty {
-            profiles = saved
+            loaded = saved
         } else {
-            let initial = BomProfile(id: "default", name: UserDefaults.standard.string(forKey: "bomphim.profile.name") ?? "Tôi", createdAt: Date())
-            profiles = [initial]
-            persist()
+            loaded = [BomProfile(
+                id: "default",
+                name: UserDefaults.standard.string(forKey: "bomphim.profile.name") ?? "Tôi",
+                createdAt: Date()
+            )]
         }
-        let savedID = UserDefaults.standard.string(forKey: "bomphim.profile.active") ?? profiles[0].id
-        activeProfileID = profiles.contains(where: { $0.id == savedID }) ? savedID : profiles[0].id
+        profiles = loaded
+        let requestedID = UserDefaults.standard.string(forKey: "bomphim.profile.active") ?? loaded[0].id
+        activeProfileID = loaded.contains(where: { $0.id == requestedID }) ? requestedID : loaded[0].id
+        if UserDefaults.standard.data(forKey: profilesKey) == nil,
+           let data = try? JSONEncoder().encode(loaded) {
+            UserDefaults.standard.set(data, forKey: profilesKey)
+        }
     }
 
     var activeProfile: BomProfile? { profiles.first { $0.id == activeProfileID } }
@@ -38,10 +44,9 @@ final class ProfileStore: ObservableObject {
     func addProfile(name: String) {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty, profiles.count < 8 else { return }
-        let profile = BomProfile(id: UUID().uuidString, name: cleanName, createdAt: Date())
-        profiles.append(profile)
+        profiles.append(BomProfile(id: UUID().uuidString, name: cleanName, createdAt: Date()))
         persist()
-        activeProfileID = profile.id
+        activeProfileID = profiles[profiles.count - 1].id
     }
 
     func renameProfile(id: String, name: String) {
