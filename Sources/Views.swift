@@ -70,7 +70,7 @@ struct MainTabView: View {
                         pendingProfileID = profile.id
                         pin = ""
                         pinError = nil
-                        if !PINStore.hasPIN { unlockSelectedProfile() }
+                        if !PINStore.hasPIN(for: profile.id) { unlockSelectedProfile() }
                     } label: {
                         HStack {
                             Image(systemName: "person.crop.circle.fill").font(.title2)
@@ -82,13 +82,13 @@ struct MainTabView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                if pendingProfileID != nil && PINStore.hasPIN {
+                if pendingProfileID != nil && PINStore.hasPIN(for: pendingProfileID ?? "") {
                     SecureField("Nhập mã PIN hồ sơ", text: $pin)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .padding(.top, 8)
                     Button("Mở hồ sơ") {
-                        if PINStore.verify(pin) { unlockSelectedProfile() }
+                        if let selectedID = pendingProfileID, PINStore.verify(pin, for: selectedID) { unlockSelectedProfile() }
                         else { pinError = "Mã PIN không chính xác." }
                     }
                     .buttonStyle(.borderedProminent).tint(BomTheme.red)
