@@ -33,7 +33,11 @@ struct MainTabView: View {
             }
         }
         .onAppear {
+            library.switchProfile(profileStore.activeProfileID)
             if !profileEnabled { isUnlocked = true }
+        }
+        .onChange(of: profileStore.activeProfileID) { id in
+            library.switchProfile(id)
         }
         .onChange(of: profileEnabled) { enabled in
             isUnlocked = !enabled
