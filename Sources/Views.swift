@@ -16,6 +16,9 @@ struct MainTabView: View {
                 .tabItem { Label("Tìm kiếm", systemImage: "magnifyingglass") }
             LibraryView()
                 .tabItem { Label("Thư viện", systemImage: "bookmark.fill") }
+            AppSettingsView()
+                .tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
+                .tabItem { Label("Thư viện", systemImage: "bookmark.fill") }
         }
         .tint(BomTheme.red)
         .background(BomTheme.background)
