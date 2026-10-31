@@ -364,68 +364,163 @@ struct PlayerItem: Identifiable {
 
 struct VideoPlayerView: View {
     let url: URL
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\\.dismiss) private var dismiss
     @State private var player = AVPlayer()
     @State private var isLandscapeRequested = false
     @State private var subtitleOptions: [AVMediaSelectionOption] = []
     @State private var subtitleGroup: AVMediaSelectionGroup?
     @State private var selectedSubtitleName: String?
+    @State private var subtitleCues: [SubtitleCue] = []
+    @State private var currentSubtitle = ""
+    @State private var subtitleFontSize: Double = UserDefaults.standard.object(forKey: "bomphim.subtitle.size") as? Double ?? 22
+    @State private var subtitleColorName = UserDefaults.standard.string(forKey: "bomphim.subtitle.color") ?? "Trắng"
+    @State private var showingSubtitleImporter = false
+    @State private var subtitleImportError: String?
+    @State private var timeObserver: Any?
+
+    private var subtitleColor: Color {
+        switch subtitleColorName {
+        case "Vàng": return .yellow
+        case "Xanh": return .cyan
+        case "Hồng": return .pink
+        default: return .white
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color.black.ignoresSafeArea()
             VideoPlayer(player: player).ignoresSafeArea()
-            HStack(spacing: 12) {
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark").font(.headline).foregroundStyle(.white)
-                        .padding(12).background(.ultraThinMaterial, in: Circle())
-                }
-                Menu {
-                    Button(T("Tắt phụ đề")) {
-                        if let group = subtitleGroup {
-                            player.currentItem?.select(nil, in: group)
+            if !currentSubtitle.isEmpty {
+                Text(currentSubtitle)
+                    .font(.system(size: subtitleFontSize, weight: .semibold))
+                    .foregroundStyle(subtitleColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 7)
+                    .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, 58)
+                    .allowsHitTesting(false)
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark").font(.headline).foregroundStyle(.white)
+                            .padding(12).background(.ultraThinMaterial, in: Circle())
+                    }
+                    Menu {
+                        Button(T("Tắt phụ đề")) {
+                            if let group = subtitleGroup { player.currentItem?.select(nil, in: group) }
+                            subtitleCues = []
+                            currentSubtitle = ""
                             selectedSubtitleName = nil
                         }
-                    }
-                    ForEach(Array(subtitleOptions.enumerated()), id: \.offset) { _, option in
-                        Button(option.displayName) {
-                            if let group = subtitleGroup {
-                                player.currentItem?.select(option, in: group)
-                                selectedSubtitleName = option.displayName
+                        if !subtitleOptions.isEmpty {
+                            Section(T("Phụ đề nhúng")) {
+                                ForEach(Array(subtitleOptions.enumerated()), id: \\.offset) { _, option in
+                                    Button(option.displayName) {
+                                        if let group = subtitleGroup {
+                                            player.currentItem?.select(option, in: group)
+                                            selectedSubtitleName = option.displayName
+                                            subtitleCues = []
+                                            currentSubtitle = ""
+                                        }
+                                    }
+                                }
                             }
                         }
+                        Section(T("Phụ đề ngoài")) {
+                            Button(T("Mở tệp .SRT / .VTT")) { showingSubtitleImporter = true }
+                            if !subtitleCues.isEmpty {
+                                Button(T("Tăng cỡ chữ")) { setSubtitleSize(min(40, subtitleFontSize + 2)) }
+                                Button(T("Giảm cỡ chữ")) { setSubtitleSize(max(14, subtitleFontSize - 2)) }
+                                Menu(T("Màu chữ")) {
+                                    ForEach(["Trắng", "Vàng", "Xanh", "Hồng"], id: \\.self) { color in
+                                        Button(color) { setSubtitleColor(color) }
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("CC", systemImage: "captions.bubble")
+                            .font(.headline).foregroundStyle(.white)
+                            .padding(12).background(.ultraThinMaterial, in: Capsule())
                     }
-                } label: {
-                    Label("CC", systemImage: "captions.bubble")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .padding(12)
-                        .background(.ultraThinMaterial, in: Capsule())
+                    .accessibilityLabel(T("Phụ đề"))
+                    Spacer()
                 }
-                .disabled(subtitleOptions.isEmpty)
-                .accessibilityLabel(T("Phụ đề"))
+                if let subtitleImportError {
+                    Text(subtitleImportError)
+                        .font(.caption).foregroundStyle(.white)
+                        .padding(8).background(.black.opacity(0.7), in: Capsule())
+                }
             }
             .padding(.top, 18)
             .padding(.leading, 16)
         }
         .statusBarHidden()
+        .fileImporter(isPresented: $showingSubtitleImporter, allowedContentTypes: [.plainText], allowsMultipleSelection: false) { result in
+            importSubtitle(result)
+        }
         .onAppear {
             let item = AVPlayerItem(url: url)
             player = AVPlayer(playerItem: item)
             loadSubtitleOptions(from: item)
+            installSubtitleTimeObserver()
             requestOrientation(.landscape)
             isLandscapeRequested = true
             player.play()
         }
         .onDisappear {
             player.pause()
+            if let timeObserver { player.removeTimeObserver(timeObserver) }
             if isLandscapeRequested { requestOrientation(.portrait) }
         }
     }
 
+    private func importSubtitle(_ result: Result<[URL], Error>) {
+        do {
+            guard let fileURL = try result.get().first else { return }
+            let granted = fileURL.startAccessingSecurityScopedResource()
+            defer { if granted { fileURL.stopAccessingSecurityScopedResource() } }
+            let content = try String(contentsOf: fileURL, encoding: .utf8)
+            let parsed = SubtitleParser.parse(content)
+            guard !parsed.isEmpty else {
+                subtitleImportError = T("Không tìm thấy phụ đề hợp lệ trong tệp.")
+                return
+            }
+            subtitleCues = parsed
+            currentSubtitle = ""
+            selectedSubtitleName = fileURL.lastPathComponent
+            if let group = subtitleGroup { player.currentItem?.select(nil, in: group) }
+            subtitleImportError = nil
+        } catch {
+            subtitleImportError = error.localizedDescription
+        }
+    }
+
+    private func installSubtitleTimeObserver() {
+        let interval = CMTime(seconds: 0.25, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+            let seconds = time.seconds
+            guard seconds.isFinite else { return }
+            currentSubtitle = subtitleCues.first(where: { seconds >= $0.start && seconds <= $0.end })?.text ?? ""
+        }
+    }
+
+    private func setSubtitleSize(_ size: Double) {
+        subtitleFontSize = size
+        UserDefaults.standard.set(size, forKey: "bomphim.subtitle.size")
+    }
+
+    private func setSubtitleColor(_ color: String) {
+        subtitleColorName = color
+        UserDefaults.standard.set(color, forKey: "bomphim.subtitle.color")
+    }
+
     private func loadSubtitleOptions(from item: AVPlayerItem) {
-        let asset = item.asset
-        if let group = asset.mediaSelectionGroup(forMediaCharacteristic: .legible) {
+        if let group = item.asset.mediaSelectionGroup(forMediaCharacteristic: .legible) {
             subtitleGroup = group
             subtitleOptions = group.options
             if let current = item.currentMediaSelection.selectedMediaOption(in: group) {
