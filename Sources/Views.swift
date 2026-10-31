@@ -4,7 +4,15 @@ import AVKit
 private enum BomTheme {
     static let background = Color(red: 0.035, green: 0.035, blue: 0.045)
     static let panel = Color(red: 0.105, green: 0.105, blue: 0.12)
-    static let red = Color(red: 0.9, green: 0.04, blue: 0.09)
+    static var red: Color {
+        switch UserDefaults.standard.string(forKey: "bomphim.theme") ?? "Đỏ điện ảnh" {
+        case "Xanh đại dương": return .blue
+        case "Tím neon": return .purple
+        case "Xanh ngọc": return .mint
+        case "Sáng tối giản": return .gray
+        default: return Color(red: 0.9, green: 0.04, blue: 0.09)
+        }
+    }
 }
 
 struct MainTabView: View {
@@ -18,7 +26,6 @@ struct MainTabView: View {
                 .tabItem { Label("Thư viện", systemImage: "bookmark.fill") }
             AppSettingsView()
                 .tabItem { Label("Cài đặt", systemImage: "gearshape.fill") }
-                .tabItem { Label("Thư viện", systemImage: "bookmark.fill") }
         }
         .tint(BomTheme.red)
         .background(BomTheme.background)
